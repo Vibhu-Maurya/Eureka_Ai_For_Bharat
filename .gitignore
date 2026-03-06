@@ -1,0 +1,131 @@
+# AWS CDK
+cdk.out/
+.cdk.staging/
+cdk.context.json
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Node
+node_modules/
+package-lock.json
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# AWS Credentials and Secrets
+*.pem
+*.key
+.aws/
+aws-credentials.json
+.env
+credentials.json
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Logs
+*.log
+logs/
+*.log.*
+
+# Test outputs
+test_video.mp4
+*.mp4
+*.mp3
+*.wav
+
+# Temporary files
+*.tmp
+*.temp
+temp/
+tmp/
+
+# CDK specific
+*.js
+*.d.ts
+!jest.config.js
+
+# Python cache
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Documentation (temporary/debug files)
+*_FIXED.md
+*_READY.md
+*_COMPLETE.md
+*_STATUS.md
+BEDROCK_*.md
+FFMPEG_*.md
+VIDEO_*.md
+PAYMENT_*.md
+PIPELINE_*.md
+BLACK_SCREEN_*.md
+DEFAULT_LANGUAGE_*.md
+QUICK_*.md
+FIX_*.md
+
+# Batch scripts (deployment specific - keep only essential ones)
+*.bat
+!deploy.bat
+
+# Test and debug files
+test_stories.txt
+execution_history.json
+workflow_history*.json
+current_config.json
+bedrock_models.json
+
+# FFmpeg layer artifacts
+ffmpeg-layer/
+
+# Python scripts (temporary)
+fix_*.py
+check_*.py
+demo_*.py
+
+# HTML test files
+generate_*.html
+orchestrai_interface.html
+
+# S3 uploaded content
+finals/
+drafts/
+uploads/
+audio/
+
+# Version files
+10.0.0

@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OrchestRAI - AI Video Generation</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .tabs {
+            display: flex;
+            background: #f5f5f5;
+            border-bottom: 2px solid #ddd;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 600;
+            color: #666;
+        }
+
+        .tab:hover {
+            background: #e8e8e8;
+        }
+
+        .tab.active {
+            background: white;
+            color: #667eea;
+            border-bottom: 3px solid #667eea;
+        }
+
+        .tab-content {
+            display: none;
+            padding: 40px;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        input[type="text"],
+        textarea,
+        select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        input[type="text"]:focus,
+        textarea:focus,
+        select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        textarea {
+            min-height: 150px;
+            resize: vertical;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+            width: 100%;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .result {
+            margin-top: 20px;
+            padding: 20px;
+            border-radius: 8px;
+            display: none;
+        }
+
+        .result.success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+
+        .result.error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+
+        .result.info {
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .video-player {
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        video {
+            max-width: 100%;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .download-link {
+            display: inline-block;
+            margin-top: 15px;
+            padding: 10px 20px;
+            background: #667eea;
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            transition: background 0.3s;
+        }
+
+        .download-link:hover {
+            background: #764ba2;
+        }
+
+        .info-box {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid #667eea;
+        }
+
+        .info-box h3 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+            margin-top: 10px;
+        }
+
+        .status-uploaded { background: #ffc107; color: #000; }
+        .status-processing { background: #17a2b8; color: #fff; }
+        .status-completed { background: #28a745; color: #fff; }
+        .status-failed { background: #dc3545; color: #fff; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎬 OrchestRAI</h1>
+            <p>AI-Powered Video Generation Engine</p>
+        </div>
+
+        <div class="tabs">
+            <div class="tab active" onclick="switchTab('upload')">📤 Upload Content</div>
+            <div class="tab" onclick="switchTab('status')">📊 Check Status</div>
+            <div class="tab" onclick="switchTab('retrieve')">🎥 Retrieve Video</div>
+        </div>
+
+        <!-- Upload Tab -->
+        <div id="upload" class="tab-content active">
+            <div class="info-box">
+                <h3>Transform Your Content into Engaging Videos</h3>
+                <p>Upload text content or provide a YouTube URL, and our AI will generate a professional short-form video optimized for Indian audiences.</p>
+            </div>
+
+            <div class="form-group">
+                <label>Content Type</label>
+                <select id="contentType" onchange="toggleContentInput()">
+                    <option value="text">Text Content</option>
+                    <option value="video">Video URL (YouTube)</option>
+                </select>
+            </div>
+
+            <div class="form-group" id="textInput">
+                <label>Your Content</label>
+                <textarea id="contentText" placeholder="Paste your article, script, or story here..."></textarea>
+            </div>
+
+            <div class="form-group" id="urlInput" style="display: none;">
+                <label>Video URL</label>
+                <input type="text" id="contentUrl" placeholder="https://www.youtube.com/watch?v=...">
+            </div>
+
+            <div class="form-group">
+                <label>Target Languages</label>
+                <select id="targetLanguages" multiple size="3">
+                    <option value="hi" selected>Hindi</option>
+                    <option value="en" selected>English</option>
+                    <option value="ta">Tamil</option>
+                    <option value="te">Telugu</option>
+                    <option value="bn">Bengali</option>
+                    <option value="mr">Marathi</option>
+                    <option value="gu">Gujarati</option>
+                </select>
+                <small style="color: #666;">Hold Ctrl/Cmd to select multiple languages</small>
+            </div>
+
+            <button class="btn" onclick="uploadContent()">🚀 Generate Video</button>
+
+            <div class="loading" id="uploadLoading">
+                <div class="spinner"></div>
+                <p>Uploading and initiating workflow...</p>
+            </div>
+
+            <div class="result" id="uploadResult"></div>
+        </div>
+
+        <!-- Status Tab -->
+        <div id="status" class="tab-content">
+            <div class="info-box">
+                <h3>Track Your Video Generation</h3>
+                <p>Enter your workflow ID to check the current status and progress of your video generation.</p>
+            </div>
+
+            <div class="form-group">
+                <label>Workflow ID</label>
+                <input type="text" id="workflowId" placeholder="Enter your workflow ID">
+            </div>
+
+            <button class="btn" onclick="checkStatus()">🔍 Check Status</button>
+
+            <div class="loading" id="statusLoading">
+                <div class="spinner"></div>
+                <p>Fetching status...</p>
+            </div>
+
+            <div class="result" id="statusResult"></div>
+        </div>
+
+        <!-- Retrieve Tab -->
+        <div id="retrieve" class="tab-content">
+            <div class="info-box">
+                <h3>Download Your Generated Video</h3>
+                <p>Enter your workflow ID to retrieve and download your completed video.</p>
+            </div>
+
+            <div class="form-group">
+                <label>Workflow ID</label>
+                <input type="text" id="retrieveWorkflowId" placeholder="Enter your workflow ID">
+            </div>
+
+            <button class="btn" onclick="retrieveVideo()">🎥 Get Video</button>
+
+            <div class="loading" id="retrieveLoading">
+                <div class="spinner"></div>
+                <p>Fetching video...</p>
+            </div>
+
+            <div class="result" id="retrieveResult"></div>
+            <div class="video-player" id="videoPlayer"></div>
+        </div>
+    </div>
+
+    <script>
+        // API Configuration
+        // IMPORTANT: Replace these with your actual values before deploying
+        const API_BASE_URL = 'YOUR_API_GATEWAY_ENDPOINT_HERE';
+        const API_KEY = 'YOUR_API_KEY_HERE';
+
+        // Store workflow and video IDs
+        let currentWorkflowId = null;
+        let currentVideoId = null;
+
+        function switchTab(tabName) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+
+            // Show selected tab
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        function toggleContentInput() {
+            const contentType = document.getElementById('contentType').value;
+            const textInput = document.getElementById('textInput');
+            const urlInput = document.getElementById('urlInput');
+
+            if (contentType === 'text') {
+                textInput.style.display = 'block';
+                urlInput.style.display = 'none';
+            } else {
+                textInput.style.display = 'none';
+                urlInput.style.display = 'block';
+            }
+        }
+
+        async function uploadContent() {
+            const contentType = document.getElementById('contentType').value;
+            const contentText = document.getElementById('contentText').value;
+            const contentUrl = document.getElementById('contentUrl').value;
+            const targetLanguages = Array.from(document.getElementById('targetLanguages').selectedOptions).map(opt => opt.value);
+
+            // Validation
+            if (contentType === 'text' && !contentText.trim()) {
+                showResult('uploadResult', 'Please enter some content', 'error');
+                return;
+            }
+            if (contentType === 'video' && !contentUrl.trim()) {
+                showResult('uploadResult', 'Please enter a video URL', 'error');
+                return;
+            }
+            if (targetLanguages.length === 0) {
+                showResult('uploadResult', 'Please select at least one target language', 'error');
+                return;
+            }
+
+            // Show loading
+            document.getElementById('uploadLoading').style.display = 'block';
+            document.getElementById('uploadResult').style.display = 'none';
+
+            try {
+                const payload = {
+                    contentType: contentType,
+                    targetLanguages: targetLanguages,
+                    qualityThreshold: 75
+                };
+
+                if (contentType === 'text') {
+                    payload.content = contentText;
+                } else {
+                    payload.source_url = contentUrl;
+                }
+
+                const response = await fetch(`${API_BASE_URL}/upload`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-api-key': API_KEY
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    currentWorkflowId = data.workflowId;
+                    showResult('uploadResult', 
+                        `✅ Upload successful!<br><br>
+                        <strong>Workflow ID:</strong> ${data.workflowId}<br>
+                        <strong>Content ID:</strong> ${data.contentId}<br>
+                        <strong>Status:</strong> ${data.status}<br>
+                        <strong>Estimated Time:</strong> ${Math.floor(data.estimatedCompletionTime / 60)} minutes<br><br>
+                        <em>Save your Workflow ID to check status and retrieve your video!</em>`, 
+                        'success'
+                    );
+                } else {
+                    showResult('uploadResult', `❌ Error: ${data.error || 'Upload failed'}`, 'error');
+                }
+            } catch (error) {
+                showResult('uploadResult', `❌ Network error: ${error.message}`, 'error');
+            } finally {
+                document.getElementById('uploadLoading').style.display = 'none';
+            }
+        }
+
+        async function checkStatus() {
+            const workflowId = document.getElementById('workflowId').value.trim();
+
+            if (!workflowId) {
+                showResult('statusResult', 'Please enter a workflow ID', 'error');
+                return;
+            }
+
+            document.getElementById('statusLoading').style.display = 'block';
+            document.getElementById('statusResult').style.display = 'none';
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/status/${workflowId}`, {
+                    headers: {
+                        'x-api-key': API_KEY
+                    }
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    const statusClass = `status-${data.status}`;
+                    const statusEmoji = data.status === 'completed' ? '✅' : 
+                                       data.status === 'failed' ? '❌' : 
+                                       data.status === 'processing' ? '⏳' : '📤';
+                    
+                    let resultHTML = `
+                        ${statusEmoji} <strong>Status:</strong> <span class="status-badge ${statusClass}">${data.status.toUpperCase()}</span><br><br>
+                        <strong>Workflow ID:</strong> ${data.workflowId}<br>
+                        <strong>Progress:</strong> ${data.progress}%<br>
+                        <strong>Current Stage:</strong> ${data.currentStage || 'N/A'}<br>
+                    `;
+
+                    if (data.qualityScore) {
+                        resultHTML += `<strong>Quality Score:</strong> ${data.qualityScore}<br>`;
+                    }
+
+                    if (data.error) {
+                        resultHTML += `<br><strong>Error:</strong> ${data.error}`;
+                    }
+
+                    if (data.status === 'completed') {
+                        resultHTML += `<br><br><em>✨ Your video is ready! Go to the "Retrieve Video" tab to download it.</em>`;
+                    }
+
+                    showResult('statusResult', resultHTML, data.status === 'failed' ? 'error' : 'info');
+                } else {
+                    showResult('statusResult', `❌ Error: ${data.error || 'Status check failed'}`, 'error');
+                }
+            } catch (error) {
+                showResult('statusResult', `❌ Network error: ${error.message}`, 'error');
+            } finally {
+                document.getElementById('statusLoading').style.display = 'none';
+            }
+        }
+
+        async function retrieveVideo() {
+            const workflowId = document.getElementById('retrieveWorkflowId').value.trim();
+
+            if (!workflowId) {
+                showResult('retrieveResult', 'Please enter a workflow ID', 'error');
+                return;
+            }
+
+            document.getElementById('retrieveLoading').style.display = 'block';
+            document.getElementById('retrieveResult').style.display = 'none';
+            document.getElementById('videoPlayer').innerHTML = '';
+
+            try {
+                // First check status to get video ID
+                const statusResponse = await fetch(`${API_BASE_URL}/status/${workflowId}`, {
+                    headers: {
+                        'x-api-key': API_KEY
+                    }
+                });
+
+                const statusData = await statusResponse.json();
+
+                if (!statusResponse.ok || statusData.status !== 'completed') {
+                    showResult('retrieveResult', 
+                        `⚠️ Video not ready yet. Current status: ${statusData.status || 'unknown'}<br><br>
+                        Please wait for the workflow to complete before retrieving the video.`, 
+                        'info'
+                    );
+                    document.getElementById('retrieveLoading').style.display = 'none';
+                    return;
+                }
+
+                // Get video ID from status
+                const videoId = statusData.videoId;
+                
+                if (!videoId) {
+                    showResult('retrieveResult', 
+                        `⚠️ Video ID not found. This workflow may have been completed before the video retrieval feature was added.<br><br>
+                        Please try generating a new video.`, 
+                        'info'
+                    );
+                    document.getElementById('retrieveLoading').style.display = 'none';
+                    return;
+                }
+
+                // Fetch video details
+                const videoResponse = await fetch(`${API_BASE_URL}/video/${videoId}`, {
+                    headers: {
+                        'x-api-key': API_KEY
+                    }
+                });
+
+                const videoData = await videoResponse.json();
+
+                if (videoResponse.ok) {
+                    // Display video player
+                    const videoPlayerHTML = `
+                        <video controls width="100%" style="max-width: 600px;">
+                            <source src="${videoData.videoUrl}" type="video/mp4">
+                            ${videoData.subtitleUrl ? `<track kind="subtitles" src="${videoData.subtitleUrl}" srclang="en" label="English">` : ''}
+                            Your browser does not support the video tag.
+                        </video>
+                        <br>
+                        <a href="${videoData.videoUrl}" download class="download-link">📥 Download Video</a>
+                        ${videoData.subtitleUrl ? `<a href="${videoData.subtitleUrl}" download class="download-link">📄 Download Subtitles</a>` : ''}
+                    `;
+                    
+                    document.getElementById('videoPlayer').innerHTML = videoPlayerHTML;
+                    
+                    showResult('retrieveResult', 
+                        `✅ Video retrieved successfully!<br><br>
+                        <strong>Video ID:</strong> ${videoId}<br>
+                        <strong>Duration:</strong> ${videoData.duration || 'N/A'} seconds<br>
+                        <strong>Language:</strong> ${videoData.language}<br>
+                        <strong>Quality Score:</strong> ${videoData.qualityScore || 'N/A'}<br><br>
+                        <em>Watch your video below or download it for offline viewing.</em>`, 
+                        'success'
+                    );
+                } else {
+                    showResult('retrieveResult', `❌ Error retrieving video: ${videoData.error || 'Unknown error'}`, 'error');
+                }
+
+            } catch (error) {
+                showResult('retrieveResult', `❌ Network error: ${error.message}`, 'error');
+            } finally {
+                document.getElementById('retrieveLoading').style.display = 'none';
+            }
+        }
+
+        function showResult(elementId, message, type) {
+            const resultDiv = document.getElementById(elementId);
+            resultDiv.className = `result ${type}`;
+            resultDiv.innerHTML = message;
+            resultDiv.style.display = 'block';
+        }
+    </script>
+</body>
+</html>
